@@ -1,101 +1,151 @@
-import Image from "next/image";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectItem, SelectContent, SelectTrigger } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
-export default function Home() {
+const exercisesDB = {
+  Peito: [
+    "Supino Reto", "Crucifixo", "Flexão de Braço",
+    "Supino Máquina Reto", "Supino Máquina Inclinado", "Supino Máquina Declinado",
+    "Mergulho / Paralela", "Cross-over Baixo", "Voador"
+  ],
+  Costas: [
+    "Barra Fixa", "Remada Curvada", "Pulldown",
+    "Remada Articulada", "Pull Around", "Puxador Frontal com Pegada Triângulo",
+    "T Row", "Remada Baixa"
+  ],
+  Ombro: [
+    "Elevação Lateral Halter", "Elevação Lateral Polia", "Elevação Frontal",
+    "Desenvolvimento", "Face Pull", "Crucifixo Invertido"
+  ],
+  Bíceps: [
+    "Rosca Scott", "Rosca Bayesian", "Rosca Banco 45"
+  ],
+  Tríceps: [
+    "Tríceps Francês Polia", "Tríceps Testa Polia", "Tríceps Corda"
+  ],
+  Quadríceps: [
+    "Hack 45", "Leg 45", "Agachamento Livre", "Agachamento Smith",
+    "Agachamento Máquina Articulada", "Cadeira Extensora"
+  ],
+  "Posterior de Coxa": [
+    "Mesa Flexora", "Cadeira Flexora", "Stiff"
+  ]
+};
+
+export default function TreinoApp() {
+  const [treinos, setTreinos] = useState({});
+  const [treinoAtual, setTreinoAtual] = useState("Treino A");
+  const [selectedGroup, setSelectedGroup] = useState("");
+  const [selectedExercise, setSelectedExercise] = useState("");
+  const [series, setSeries] = useState("");
+  const [reps, setReps] = useState("");
+  const [method, setMethod] = useState("");
+  const [observations, setObservations] = useState("");
+  const [muscleTarget, setMuscleTarget] = useState("");
+  const [aerobicTraining, setAerobicTraining] = useState("");
+
+  const addExercise = () => {
+    if (selectedExercise && series && reps) {
+      setTreinos({
+        ...treinos,
+        [treinoAtual]: [...(treinos[treinoAtual] || []), { exercise: selectedExercise, series, reps, method, observations }]
+      });
+      setSeries("");
+      setReps("");
+      setMethod("");
+      setObservations("");
+    }
+  };
+
+  const removeExercise = (treino, index) => {
+    setTreinos({
+      ...treinos,
+      [treino]: treinos[treino].filter((_, i) => i !== index)
+    });
+  };
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    doc.text(`Treinos`, 10, 10);
+    Object.entries(treinos).forEach(([treino, exercises], idx) => {
+      doc.text(`${treino}`, 10, 20 + idx * 10);
+      doc.autoTable({
+        startY: 30 + idx * 10,
+        head: [["Exercício", "Séries", "Repetições", "Método", "Observações"]],
+        body: exercises.map((item, index) => [
+          item.exercise,
+          item.series,
+          item.reps,
+          item.method,
+          item.observations
+        ]),
+        theme: "grid",
+        styles: { halign: "center" }
+      });
+    });
+    doc.save("treinos.pdf");
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="p-6 max-w-lg mx-auto space-y-4">
+      <Input placeholder="Músculos Alvo" value={muscleTarget} onChange={(e) => setMuscleTarget(e.target.value)} />
+      <Input placeholder="Treino Aeróbico" value={aerobicTraining} onChange={(e) => setAerobicTraining(e.target.value)} />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <Select onValueChange={setTreinoAtual}>
+        <SelectTrigger>Selecione um Treino</SelectTrigger>
+        <SelectContent>
+          {["Treino A", "Treino B", "Treino C"].map((treino) => (
+            <SelectItem key={treino} value={treino}>{treino}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select onValueChange={setSelectedGroup}>
+        <SelectTrigger>Selecione um grupo muscular</SelectTrigger>
+        <SelectContent>
+          {Object.keys(exercisesDB).map((group) => (
+            <SelectItem key={group} value={group}>{group}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {selectedGroup && (
+        <Select onValueChange={setSelectedExercise}>
+          <SelectTrigger>Selecione um exercício</SelectTrigger>
+          <SelectContent>
+            {exercisesDB[selectedGroup].map((exercise) => (
+              <SelectItem key={exercise} value={exercise}>{exercise}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      <Input placeholder="Séries" value={series} onChange={(e) => setSeries(e.target.value)} />
+      <Input placeholder="Repetições" value={reps} onChange={(e) => setReps(e.target.value)} />
+      <Input placeholder="Método de Treinamento" value={method} onChange={(e) => setMethod(e.target.value)} />
+      <Input placeholder="Observações" value={observations} onChange={(e) => setObservations(e.target.value)} />
+
+      <Button onClick={addExercise}>Adicionar Exercício</Button>
+
+      {Object.entries(treinos).map(([treino, exercises]) => (
+        <Card key={treino} className="mt-4">
+          <CardContent>
+            <h3>{treino}</h3>
+            {exercises.map((item, index) => (
+              <div key={index} className="flex justify-between items-center">
+                <p>{index + 1}. {item.exercise} - {item.series}x{item.reps} - {item.method} - {item.observations}</p>
+                <Button variant="destructive" size="sm" onClick={() => removeExercise(treino, index)}>Remover</Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+
+      <Button onClick={generatePDF}>Gerar PDF</Button>
     </div>
   );
 }
